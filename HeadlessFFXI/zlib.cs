@@ -9,7 +9,7 @@ namespace HeadlessFFXI
         public uint[] jump;
         public void Init()
         {
-            FileStream fs = new FileStream(@"C:\SupernovaFFXI\decompress.dat", FileMode.Open);
+            FileStream fs = new FileStream(@"decompress.dat", FileMode.Open);
             uint[] dec = Load_File(fs);
             uint baseslot = dec[0] - sizeof(uint);
             uint[] jumps = new uint[dec.Length];

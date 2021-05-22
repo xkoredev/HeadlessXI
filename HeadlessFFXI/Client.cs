@@ -52,7 +52,7 @@ namespace HeadlessFFXI
         {
             myzlib = new zlib();
             myzlib.Init();
-            //Console.WriteLine("[Info]Attempting to login");
+            Console.WriteLine("[Info]Attempting to login");
             try
             {
                 TcpClient client = new TcpClient(loginserver, 54231);
@@ -66,24 +66,21 @@ namespace HeadlessFFXI
                 stream.Read(indata, 0, 16);
                 switch (indata[0])
                 {
-                    case 0x0001: //Login Success
-                        //Console.WriteLine("[Login]Logged In");
+                    case 0x0001: // Login Success
+                        Console.WriteLine("[Login] Logged In");
                         Account_Data.ID = BitConverter.ToUInt32(indata, 1);
-                        if (!silient)
-                            Console.WriteLine("[Info]Account id:{0:D}", Account_Data.ID);
+                        Console.WriteLine("[Info] Account id:{0:D}", Account_Data.ID);
                         lobbydata = new TcpClient(loginserver, 54230);
                         datastream = lobbydata.GetStream();
                         LobbyData();
                         LobbyView0x26();
                         break;
                     case 0x0002:
-                        if (!silient)
-                            Console.WriteLine("[Login]Login failed,Trying to create the account");
+                        Console.WriteLine("[Login] Login failed, Trying to create the account");
                         Account_Creation(data);
                         break;
                     default:
-                        if (!silient)
-                            Console.WriteLine("[Login]Login failed Unsure Code:" + indata[0]);
+                        Console.WriteLine("[Login] Login failed Unsure Code:" + indata[0]);
                         break;
                 }
                 stream.Close();
@@ -94,16 +91,15 @@ namespace HeadlessFFXI
                 switch (d.ErrorCode)
                 {
                     case 10061:
-                        if (!silient)
-                            Console.WriteLine("[Login]No responce from server");
+                        Console.WriteLine("[Login] No responce from server");
                         break;
                     default:
-                        if (!silient)
-                            Console.WriteLine("[Login]SocketError received:" + d.ErrorCode + ", " + d.Message);
+                        Console.WriteLine("[Login] SocketError received:" + d.ErrorCode + ", " + d.Message);
                         break;
                 }
             }
         }
+
         void Account_Creation(byte[] data)
         {
             TcpClient client = new TcpClient(loginserver, 54231);
@@ -159,8 +155,8 @@ namespace HeadlessFFXI
             viewstream.Write(data, 0, 152);
             data = new Byte[40];
             viewstream.Read(data, 0, 40);
-            //Console.WriteLine("[Info]Expantion Bitmask:{0:D}", BitConverter.ToUInt16(data, 32));
-            //Console.WriteLine("[Info]Feature Bitmask:{0:D}", BitConverter.ToUInt16(data, 36));
+            Console.WriteLine("[Info] Expantion Bitmask:{0:D}", BitConverter.ToUInt16(data, 32));
+            Console.WriteLine("[Info] Feature Bitmask:{0:D}", BitConverter.ToUInt16(data, 36));
             LobbyView0x1F();
         }
         void LobbyView0x1F()
@@ -195,8 +191,7 @@ namespace HeadlessFFXI
                 }
                 else
                 {
-                    if (!silient)
-                        Console.WriteLine("[Info]No charater in slot:{0:G} defaulting to slot 1", (Account_Data.Char_Slot + 1));
+                    Console.WriteLine("[Info] No charater in slot:{0:G} defaulting to slot 1", (Account_Data.Char_Slot + 1));
                     Account_Data.Char_Slot = 0;
                     Player_Data.ID = BitConverter.ToUInt32(data, 36);
                     string name = System.Text.Encoding.UTF8.GetString(data, 44, 16);
@@ -205,15 +200,13 @@ namespace HeadlessFFXI
                     Player_Data.Level = data[73 + 32];
                     Player_Data.zoneid = data[72 + 32];
                 }
-                if (!silient)
-                    Console.WriteLine("[Info]Name:{0:G} CharID:{1:D} Job:{2:D} Level:{3:D}", new object[] { Player_Data.Name, Player_Data.ID, Player_Data.Job, Player_Data.Level });
+                Console.WriteLine("[Info] Name:{0:G} CharID:{1:D} Job:{2:D} Level:{3:D}", new object[] { Player_Data.Name, Player_Data.ID, Player_Data.Job, Player_Data.Level });
                 LobbyView0x24();
             }
             else
             {
                 //Create a charater
-                if (!silient)
-                    Console.WriteLine("[Login]No charater's on account");
+                Console.WriteLine("[Login] No charater's on account");
                 LobbyView0x22();
             }
             /*
@@ -316,6 +309,7 @@ namespace HeadlessFFXI
             viewstream.Write(data, 0, 88);
             LobbyData0xA2();
         }
+
         // Packet with key for blowfish
         void LobbyData0xA2()
         {
@@ -341,10 +335,10 @@ namespace HeadlessFFXI
             uint searchip = BitConverter.ToUInt32(data, 0x40);
             uint searchport = BitConverter.ToUInt16(data, 0x44);
             RemoteIpEndPoint = new IPEndPoint(zoneip, Convert.ToInt32(zoneport));
-            if (!silient)
-                Console.WriteLine("[Login]Handed off to gameserver " + zoneip + ":" + zoneport);
+            Console.WriteLine("[Login] Handed off to gameserver " + zoneip + ":" + zoneport);
             GameserverStart();
         }
+
         #endregion
         #region Packet Helpers
         static void packet_addmd5(ref byte[] data)
@@ -376,8 +370,7 @@ namespace HeadlessFFXI
                 System.Buffer.BlockCopy(input, 0, data, Packet_Head + 0x02, input.Length);
                 data[0x06] = 0x03;
                 packet_addmd5(ref data);
-                if (!silient)
-                    Console.WriteLine("[Game]Log Out sent");
+                Console.WriteLine("[Game] Log Out sent");
                 Gameserver.Send(data, data.Length);
                 data = new byte[4 + Packet_Head + 16];
                 input = BitConverter.GetBytes(PDcode); //Packet count
@@ -389,8 +382,16 @@ namespace HeadlessFFXI
                 input = BitConverter.GetBytes(PDcode); //Packet count
                 System.Buffer.BlockCopy(input, 0, data, Packet_Head + 0x02, input.Length);
                 packet_addmd5(ref data);
-                Gameserver.Send(data, data.Length);
+                try
+                {
+                    Gameserver.Send(data, data.Length);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Error: " + e.Message);
+                }
             }
+
             if (datastream != null)
             {
                 datastream.Close();
@@ -492,6 +493,9 @@ namespace HeadlessFFXI
                             case 0x51://Char Appearance
                             case 0x55://KeyItems
                             case 0x56://QuestMissionLog
+                            case 0x5B: // Position
+                                P05B(final, size, index);
+                                break;
                             case 0x5E://Conquest
                             case 0x61://CharStats
                             case 0x62://CharSkills
@@ -581,16 +585,14 @@ namespace HeadlessFFXI
             input = BitConverter.GetBytes(Player_Data.ID);
             System.Buffer.BlockCopy(input, 0, data, Packet_Head + 0x0C, input.Length);
             packet_addmd5(ref data);
-            if (!silient)
-                Console.WriteLine("[Game]Outgoing packet 0x0A, Zone in");
+            //Console.WriteLine("[Game]Outgoing packet 0x0A, Zone in");
             try
             {
                 Gameserver.Send(data, data.Length);
             }
             catch (SocketException d)
             {
-                if (!silient)
-                    Console.WriteLine("[Game]Failed to connect retrying");
+                Console.WriteLine("[Game]Failed to connect retrying");
                 startingkey[4] -= 2;
                 Logintozone();
             }
@@ -605,8 +607,7 @@ namespace HeadlessFFXI
             input = BitConverter.GetBytes(PDcode); //Packet count
             System.Buffer.BlockCopy(input, 0, data, Packet_Head + 0x02, input.Length);
             packet_addmd5(ref data);
-            if (!silient)
-                Console.WriteLine("[Game]Outgoing packet 0x11, Zone in confirmation");
+            //Console.WriteLine("[Game]Outgoing packet 0x11, Zone in confirmation");
             Gameserver.Send(data, data.Length);
             #endregion
             #region RequestCharInfo
@@ -679,14 +680,16 @@ namespace HeadlessFFXI
                 new_Head = new_Head + (0x02 * 2);
 
                 packet_addmd5(ref data);
-                if (!silient)
-                    Console.WriteLine("[Game]Outgoing packet multi,Sending Post zone data requests");
+                //if (!silient)
+                Console.WriteLine("[Game]Outgoing packet multi,Sending Post zone data requests");
                 Gameserver.Send(data, data.Length);
                 PDcode++;
             }
             #endregion
+            /*
             float pos = -330;
             bool plus = true;
+
             //Example flow of just walking in a line back and forth
             while (!abort)
             {
@@ -719,6 +722,7 @@ namespace HeadlessFFXI
             }
 
             Console.Read();
+            */
         }
         public void SendTell(String User, String Message)
         {
@@ -745,16 +749,48 @@ namespace HeadlessFFXI
             else
                 Console.WriteLine("Null Gameserver");
         }
+
+        public void SendSay(String Message)
+        {
+            byte[] data = new byte[21 + 45 + Packet_Head + 30];
+
+            byte[] input = BitConverter.GetBytes(PDcode); // Packet count
+            System.Buffer.BlockCopy(input, 0, data, 0, input.Length);
+
+            input = BitConverter.GetBytes(((UInt16)0x0B5)); // Packet type
+            System.Buffer.BlockCopy(input, 0, data, Packet_Head, input.Length);
+
+            input = BitConverter.GetBytes(Message.Length); // Size
+            System.Buffer.BlockCopy(input, 0, data, Packet_Head + 0x01, input.Length);
+
+            input = BitConverter.GetBytes(PDcode); // Packet count
+            System.Buffer.BlockCopy(input, 0, data, Packet_Head + 0x02, input.Length);
+
+            data[Packet_Head + 0x04] = 0; // Say
+
+            input = Encoding.UTF8.GetBytes(Message);
+            System.Buffer.BlockCopy(input, 0, data, Packet_Head + 0x6, input.Length);
+
+            packet_addmd5(ref data);
+
+            Console.WriteLine("[>][Say] " + Message);
+            if (Gameserver != null)
+            {
+                Gameserver.Send(data, data.Length);
+            }
+        }
+
         static void Exit()
         {
             System.Environment.Exit(1);
         }
+
         #region Incoming Packets
         void P017(byte[] packet, int size, int index)
         {
             string name = System.Text.Encoding.UTF8.GetString(packet, 0x08, 15);
             if (!silient)
-                Console.WriteLine("[Chat]" + name + ":" + System.Text.Encoding.UTF8.GetString(packet, 0x17 + index, 107));
+                Console.WriteLine("[Chat] " + name + ":" + System.Text.Encoding.UTF8.GetString(packet, 0x17 + index, 107));
             //Respond to chat
             byte[] data = new byte[0x64];
             byte[] input;
@@ -777,6 +813,7 @@ namespace HeadlessFFXI
             Gameserver.Send(data, data.Length);
             IncomingChat?.Invoke(this, EventArgs.Empty);
         }
+
         void P04D(byte[] packet, int size, int index)
         {
             uint length = BitConverter.ToUInt32(packet, 0x14 + index);
@@ -828,7 +865,6 @@ namespace HeadlessFFXI
             Player_Data.Inv.Container[11].current_size = BitConverter.ToUInt16(packet, 0x2A + index);
             Player_Data.Inv.Container[12].size = packet[0x10 + index];
             Player_Data.Inv.Container[12].current_size = BitConverter.ToUInt16(packet, 0x2C + index);
-
         }
         void P050(byte[] packet, int size, int index)
         {
@@ -845,6 +881,12 @@ namespace HeadlessFFXI
             }
         }
         void P037(byte[] packet, int size, int index)
+        {
+
+        }
+        
+        // Chat Message
+        void P0B5(byte[] packet, int size, int index)
         {
 
         }
@@ -879,7 +921,8 @@ namespace HeadlessFFXI
                     Console.WriteLine("[Parse]Incorect size in incoming 0xDF Packet");
             }
         }
-        //Zone in
+
+        // Zone in
         void P00A(byte[] packet, int size, int index)
         {
             if (size == 0x82)
@@ -901,8 +944,8 @@ namespace HeadlessFFXI
                 Player_Data.Int = BitConverter.ToUInt16(packet, 0xCC + 8 + index);
                 Player_Data.Mnd = BitConverter.ToUInt16(packet, 0xCC + 10 + index);
                 Player_Data.Chr = BitConverter.ToUInt16(packet, 0xCC + 12 + index);
-                if (!silient)
-                    Console.WriteLine("Id:{0:G} Rot:{1:G} {2:G},{3:G},{4:G} {5:G}/{6:G} MaxHP:{7:G} MaxMP:{8:G} Str:{9:G} Chr:{10:G}", Player_Data.ID, Player_Data.pos.Rot, Player_Data.pos.X, Player_Data.pos.Y, Player_Data.pos.Z, Player_Data.Job, Player_Data.SubJob, Player_Data.MaxHP, Player_Data.MaxMP, Player_Data.Str, Player_Data.Chr);
+                //if (!silient)
+                //Console.WriteLine("Id:{0:G} Rot:{1:G} {2:G},{3:G},{4:G} {5:G}/{6:G} MaxHP:{7:G} MaxMP:{8:G} Str:{9:G} Chr:{10:G}", Player_Data.ID, Player_Data.pos.Rot, Player_Data.pos.X, Player_Data.pos.Y, Player_Data.pos.Z, Player_Data.Job, Player_Data.SubJob, Player_Data.MaxHP, Player_Data.MaxMP, Player_Data.Str, Player_Data.Chr);
                 Player_Data.zone.ID = BitConverter.ToUInt16(packet, 0x30 + index);
                 Player_Data.zone.Weather = BitConverter.ToUInt16(packet, 0x68 + index);
                 Player_Data.zone.Weather_time = BitConverter.ToUInt32(packet, 0x6A + index);
@@ -913,8 +956,23 @@ namespace HeadlessFFXI
             }
             else
             {
-                if (!silient)
-                    Console.WriteLine("[Parse]Incorect size in incoming 0xDF Packet");
+                //if (!silient)
+                Console.WriteLine("[Parse]Incorrect size in incoming 0xDF Packet");
+            }
+        }
+
+        // Position
+        void P05B(byte[] packet, int size, int index)
+        {
+            if (size == 0x0E)
+            {
+                Player_Data.pos.X = BitConverter.ToSingle(packet, 0x04 + index);
+                Player_Data.pos.Y = BitConverter.ToSingle(packet, 0x08 + index);
+                Player_Data.pos.Z = BitConverter.ToSingle(packet, 0x0C + index);
+                Player_Data.pos.Rot = packet[0x17 + index];
+
+                Player_Data.ID = BitConverter.ToUInt32(packet, 0x10 + index);
+                Player_Data.targid = BitConverter.ToUInt16(packet, 0x14 + index);
             }
         }
 
