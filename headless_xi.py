@@ -1,17 +1,18 @@
 import time
 from client import Client
 
-user = "admin"
-password = "admin"
-server = "localhost"
-char_slot = 1 # Note: 1-based
-
 def main():
-    client = Client("admin", "admin", "localhost", 0)
+    # Create a client and log in
+    client = Client("admin", "admin", "localhost")
     client.login()
+
+    # Wait a while for login
     time.sleep(10)
-    client.send_tell("Hello!")
-    time.sleep(5)
+
+    # Send GM commands
+    client.send_tell("!bring Testtwo")
+
+    # Goodbye
     client.logout()
 
 if __name__ == "__main__":

@@ -5,10 +5,17 @@ A headless client for DSP/TPZ/LSB-based servers, written in Python.
 ```py
 from client import Client
 
+# Create a client and log in
 client = Client("admin", "admin", "localhost")
 client.login()
-client.send_tell("Hello!")
 
+# Wait a while for login
+time.sleep(10)
+
+# Send GM commands
+client.send_tell("!bring Testtwo")
+
+# Goodbye
 client.logout()
 ```
 
