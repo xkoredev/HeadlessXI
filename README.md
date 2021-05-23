@@ -3,20 +3,25 @@ A headless client for DSP/TPZ/LSB-based servers, written in Python.
 
 ## Usage
 ```py
-from client import Client
+from headlessxi import HeadlessXIClient
 
 # Create a client and log in
-client = Client("admin", "admin", "localhost")
-client.login()
+hxi_client = HeadlessXIClient("admin", "admin", "localhost")
+hxi_client.login()
 
 # Wait a while for login
 time.sleep(10)
 
 # Send GM commands
-client.send_tell("!bring Testtwo")
+hxi_client.send_say("!bring Testtwo")
+time.sleep(5)
+
+# Send /say messages
+hxi_client.send_say("Hello from HeadlessXIClient!")
+time.sleep(2)
 
 # Goodbye
-client.logout()
+hxi_client.logout()
 ```
 
 ## Credits

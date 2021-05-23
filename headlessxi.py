@@ -7,12 +7,7 @@ import hashlib
 import blowfish
 from util import util, PACKET_HEAD
 
-# TODO
-class Decompress:
-    def __init__(self, path):
-        pass
-
-class Client:
+class HeadlessXIClient:
     def __init__(self, username, password, server, slot = 1):
         self.username = username
         self.password = password
@@ -60,6 +55,7 @@ class Client:
             exit(-1)
 
     def logout(self):
+        self.map_send_logout()
         self.stop_map_listener()
 
     def login_connect(self):
@@ -169,6 +165,7 @@ class Client:
             self.search_ip = util.int_to_ip(socket.htonl(util.unpack_uint32(data, 0x40)))
             self.search_port = util.unpack_uint16(data, 0x44)
         except Exception as ex:
+            print("Could not get information for map server handoff!")
             print(ex)
             exit(-1)
 
@@ -254,8 +251,8 @@ class Client:
         util.packet_addmd5(data)
         self.map_sock.sendto(data, (self.zone_ip, self.zone_port))
 
-    def send_tell(self, message):
-        print(f"Say: {message}")
+    def send_say(self, message):
+        print(f"Sending /say: {message}")
         self.PD_CODE = self.PD_CODE + 1
         data = bytearray(21 + 45 + PACKET_HEAD + 30)
         util.memcpy(util.pack_16(self.PD_CODE), 0, data, 0, 2) # Packet Count
@@ -264,5 +261,27 @@ class Client:
         util.memcpy(util.pack_16(self.PD_CODE), 0, data, PACKET_HEAD + 0x02, 2) # Packet Count
         data[PACKET_HEAD + 0x04] = 0; # Say
         util.memcpy(util.to_bytes(message), 0, data, PACKET_HEAD + 0x06, len(message))
+        util.packet_addmd5(data)
+        self.map_sock.sendto(data, (self.zone_ip, self.zone_port))
+
+    def map_send_logout(self):
+        print("Sending map_send_logout")
+
+        self.PD_CODE = self.PD_CODE + 1
+        data = bytearray(4 + PACKET_HEAD + 16)
+        util.memcpy(util.pack_16(self.PD_CODE), 0, data, 0, 2) # Packet Count
+        util.memcpy(util.pack_16(0xE7), 0, data, PACKET_HEAD, 2) # Packet Type
+        data[PACKET_HEAD + 0x01] = 0x04
+        util.memcpy(util.pack_16(self.PD_CODE), 0, data, PACKET_HEAD + 0x02, 2) # Packet Count
+        data[PACKET_HEAD + 0x06] = 0x03; # Say
+        util.packet_addmd5(data)
+        self.map_sock.sendto(data, (self.zone_ip, self.zone_port))
+
+        self.PD_CODE = self.PD_CODE + 1
+        data = bytearray(4 + PACKET_HEAD + 16)
+        util.memcpy(util.pack_16(self.PD_CODE), 0, data, 0, 2) # Packet Count
+        util.memcpy(util.pack_16(0x0D), 0, data, PACKET_HEAD, 2) # Packet Type
+        data[PACKET_HEAD + 0x01] = 0x04
+        util.memcpy(util.pack_16(self.PD_CODE), 0, data, PACKET_HEAD + 0x02, 2) # Packet Count
         util.packet_addmd5(data)
         self.map_sock.sendto(data, (self.zone_ip, self.zone_port))
