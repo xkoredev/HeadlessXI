@@ -9,7 +9,7 @@ hxi_client.login()
 time.sleep(10)
 
 # Send /say messages
-hxi_client.send_say('Hello from HXIClient!')
+hxi_client.send_say('Hello')
 time.sleep(2)
 
 # Goodbye

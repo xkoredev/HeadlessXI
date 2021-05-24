@@ -177,32 +177,25 @@ class HXIClient:
         # do-while
         retries = 0
         while True:
-            self.lobbydata_sock.sendall(data)
-            data = self.lobbyview_sock.recv(0x48)
-            error = util.unpack_uint16(data, 32)
-            if error != 305 or error != 321: # Success!
-                break
-            elif retries > 5:
-                print('Retried too many times. Aborting.')
+            if retries > 5:
                 exit(-1)
-            else:
-                print(f'Failed to handoff to the gameserver: {error}')
-                print('Retrying in 5s...')
+            try:
+                self.lobbydata_sock.sendall(data)
+                data = self.lobbyview_sock.recv(0x48)
+                error = util.unpack_uint16(data, 32)
+                if error != 305 or error != 321:
+                    self.zone_ip = util.int_to_ip(
+                        socket.htonl(util.unpack_uint32(data, 0x38)))
+                    self.zone_port = util.unpack_uint16(data, 0x3C)
+                    self.search_ip = util.int_to_ip(
+                        socket.htonl(util.unpack_uint32(data, 0x40)))
+                    self.search_port = util.unpack_uint16(data, 0x44)
+                    break
+            except Exception as ex:
                 retries = retries + 1
-                time.sleep(5)
-
-        try:
-            self.zone_ip = util.int_to_ip(
-                socket.htonl(util.unpack_uint32(data, 0x38)))
-            self.zone_port = util.unpack_uint16(data, 0x3C)
-            self.search_ip = util.int_to_ip(
-                socket.htonl(util.unpack_uint32(data, 0x40)))
-            self.search_port = util.unpack_uint16(data, 0x44)
-        except Exception as ex:
-            print('Could not get information for map server handoff:')
-            print('Did not get enough bytes back from lobby data socket')
-            print(ex)
-            exit(-1)
+                print('Error getting gameserver handoff data')
+                print(ex)
+                time.sleep(2)
 
         self.map_server = (self.zone_ip, self.zone_port)
         self.search_server = (self.search_ip, self.search_port)
