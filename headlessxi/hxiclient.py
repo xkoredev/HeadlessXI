@@ -167,15 +167,29 @@ class HXIClient:
 
     def lobby_data_0xA2(self):
         print('Sending lobby_data_0xA2')
-        time.sleep(0.5)
+        time.sleep(2)
         data = bytearray([
             0xA2, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x58, 0xE0, 0x5D, 0xAD, 0x00,
             0x00, 0x00, 0x00
         ])
-        self.lobbydata_sock.sendall(data)
 
-        data = self.lobbyview_sock.recv(0x48)
+        # do-while
+        retries = 0
+        while True:
+            self.lobbydata_sock.sendall(data)
+            data = self.lobbyview_sock.recv(0x48)
+            error = util.unpack_uint16(data, 32)
+            if error != 305 or error != 321: # Success!
+                break
+            elif retries > 5:
+                print('Retried too many times. Aborting.')
+                exit(-1)
+            else:
+                print(f'Failed to handoff to the gameserver: {error}')
+                print('Retrying in 5s...')
+                retries = retries + 1
+                time.sleep(5)
 
         try:
             self.zone_ip = util.int_to_ip(
