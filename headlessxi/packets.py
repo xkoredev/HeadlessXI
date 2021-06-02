@@ -12,19 +12,15 @@ class packets:
         global PD_CODE
         PD_CODE = PD_CODE + 1
 
-        code_bytes = util.pack_16(PD_CODE)
-        type_bytes = util.pack_16(type)
-        size_bytes = util.pack_16(size)
-
-        data = bytearray(PACKET_HEAD + size)
+        data = bytearray(PACKET_HEAD + 4 + size + 16) # header + (type, size, seq) + body + md5
 
         # Header
-        util.memcpy(code_bytes, 0, data, 0, 2)
+        util.memcpy(util.pack_16(PD_CODE), 0, data, 0, 2)
 
         # Body
-        util.memcpy(type_bytes, 0, data, PACKET_HEAD + 0x00, 2) # Packet Type
-        util.memcpy(size_bytes, 0, data, PACKET_HEAD + 0x01, 2) # Packet Size
-        util.memcpy(code_bytes, 0, data, PACKET_HEAD + 0x02, 2) # Packet Seq (not important)
+        data[PACKET_HEAD + 0] = type
+        data[PACKET_HEAD + 1] = size
+        data[PACKET_HEAD + 2] = 0 # Seq
 
         return data
 
@@ -65,17 +61,9 @@ class packets:
 
     @staticmethod
     def to_map_b5(message):
-        global PD_CODE
-        PD_CODE = PD_CODE + 1
-
-        data = bytearray(21 + 45 + PACKET_HEAD + 30)
-        util.memcpy(util.pack_16(PD_CODE), 0, data, 0, 2)
-        util.memcpy(util.pack_16(0x0B5), 0, data, PACKET_HEAD, 2)
-        data[PACKET_HEAD + 0x01] = len(message)
-        util.memcpy(util.pack_16(PD_CODE), 0, data, PACKET_HEAD + 0x02, 2)
+        data = packets.generate_starting_packet(0xB5, 130)
         data[PACKET_HEAD + 0x04] = 0; # Say
         util.memcpy(util.to_bytes(message), 0, data, PACKET_HEAD + 0x06, len(message))
-
         util.packet_md5(data)
         return data
 
@@ -96,14 +84,6 @@ class packets:
 
     @staticmethod
     def to_map_11():
-        global PD_CODE
-        PD_CODE = PD_CODE + 1
-
-        data = bytearray(53)
-        util.memcpy(util.pack_16(PD_CODE), 0, data, 0, 2)
-        util.memcpy(util.pack_16(0x011), 0, data, PACKET_HEAD, 2)
-        data[PACKET_HEAD + 0x01] = 0x04
-        util.memcpy(util.pack_16(PD_CODE), 0, data, PACKET_HEAD + 0x02, 2)
-
+        data = packets.generate_starting_packet(0x11, 0x04)
         util.packet_md5(data)
         return data

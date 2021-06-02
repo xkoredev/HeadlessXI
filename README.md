@@ -70,7 +70,12 @@ SELECT id, login FROM accounts;
 -- Create a character
 INSERT INTO chars(charid, accid, charname, pos_zone, nation, gmlevel)
 VALUES(1, 1000, 'Test', 0, 0, 5);
-SELECT charid, accid, pos_zone, pos_x, pos_y, pos_z FROM chars;
+SELECT charid, accid, charname, pos_zone, nation, gmlevel FROM chars;
+
+-- Set char_look (default is 0 and trips up scripting)
+INSERT INTO char_look (charid, face, race, size, head, body, hands, legs, feet, main, sub, ranged)
+VALUES (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+SELECT charid, face, race FROM char_look;
 
 -- Update character information
 -- Place near some Robber Crabs in Kuftal Tunnel
@@ -95,11 +100,10 @@ python3 << EOF
 from headlessxi import HXIClient
 hxi_client = HXIClient('admin', 'admin', 'localhost')
 hxi_client.login()
+print('Sleeping 30s')
 time.sleep(30)
 hxi_client.logout()
 EOF
-
-printf "\n"
 ```
 
 #### Output
@@ -107,18 +111,28 @@ printf "\n"
 ```txt
 Installing HeadlessXI
 Collecting git+https://github.com/zach2good/HeadlessXI.git
-  Cloning https://github.com/zach2good/HeadlessXI.git to [...]
-  Running command git clone -q https://github.com/zach2good/HeadlessXI.git [...]
+  Cloning https://github.com/zach2good/HeadlessXI.git to /tmp/pip-req-build-f6opnkjm
+  Running command git clone -q https://github.com/zach2good/HeadlessXI.git /tmp/pip-req-build-f6opnkjm
+Building wheels for collected packages: headlessxi
+  Building wheel for headlessxi (setup.py): started
+  Building wheel for headlessxi (setup.py): finished with status 'done'
+  Created wheel for headlessxi: filename=headlessxi-0.1-py3-none-any.whl size=32879 sha256=43ac6579c9a97604cf891ac66dc7c10c6a3635c7722d1b03d77a048523939289
+  Stored in directory: /tmp/pip-ephem-wheel-cache-vr2t592_/wheels/ff/30/84/b419d6667464aa1d28a44679cd328417d171d314033a32fbed
+Successfully built headlessxi
+Installing collected packages: headlessxi
+Successfully installed headlessxi-0.1
 
 Populating database
-id      login
-1000    admin
-charid  accid   pos_zone        pos_x   pos_y   pos_z
-1       1000    0       0.000   0.000   0.000
-charid  accid   pos_zone        pos_x   pos_y   pos_z
-1       1000    174     55.000  -9.000  -140.000
-charid  varname value
-1       GodMode 1
+id	login
+1000	admin
+charid  accid   charname        pos_zone        nation  gmlevel
+1       1000    Test    0       0       5
+charid	face	race
+1	1	1
+charid	accid	pos_zone	pos_x	pos_y	pos_z
+1	1000	174	55.000	-9.000	-140.000
+charid	varname	value
+1	GodMode	1
 
 Running HeadlessXI for 60 seconds
 Starting up login connection on localhost port 54231
@@ -134,7 +148,11 @@ Sending lobby_view_0x1F
 Sending lobby_data_0xA1 (1)
 Sending lobby_view_0x07
 Sending lobby_data_0xA2
-...
+ZoneServ: ('127.0.0.1', 54230), SearchServ: ('161.0.0.1', 54002)
+Starting listener to map server
+Sleeping 30s
+Sending map_send_logout
+Closing listener to map server
 ```
 
 ## Credits
