@@ -103,7 +103,7 @@ class HXIClient:
         try:
             data = bytearray(152)
             data[8] = 0x26
-            version = '30210400_0'
+            version = '30210706_0'
             util.memcpy(version, 0, data, 116, 10)
             self.lobbyview_sock.sendall(data)
 
