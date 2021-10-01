@@ -8,12 +8,13 @@ from .util import util
 from .packets import packets
 
 class HXIClient:
-    def __init__(self, username, password, server, slot=1):
+    def __init__(self, username, password, server, slot=1, client_str='30210706_0'):
         # Args
         self.username = username
         self.password = password
         self.server = server
         self.slot = slot
+        self.client_str = client_str
 
         # Init things
         self.bf = util.init_blowfish()
@@ -103,8 +104,7 @@ class HXIClient:
         try:
             data = bytearray(152)
             data[8] = 0x26
-            version = '30210706_0'
-            util.memcpy(version, 0, data, 116, 10)
+            util.memcpy(self.client_str, 0, data, 116, 10)
             self.lobbyview_sock.sendall(data)
 
             in_data = self.lobbyview_sock.recv(40)
